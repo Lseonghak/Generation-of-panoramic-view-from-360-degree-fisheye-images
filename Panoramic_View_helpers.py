@@ -38,9 +38,13 @@ def calculate_spherical_coordinates(u,v):
     lo = (1-u) * math.pi / 2
     la = (1-v) * math.pi / 2
 
-    x = int(np.sin(la) * np.cos(lo))
-    y = int(np.cos(la))
-    z = int(np.sin(la) * np.sin(lo))
+    x = np.sin(la) * np.cos(lo)
+    y = np.cos(la)
+    z = np.sin(la) * np.sin(lo)
+    
+    # x = np.sin(lo) * np.cos(la)
+    # y = np.cos(lo)
+    # z = np.sin(lo) * np.sin(la)
 
     return x, y, z
 
@@ -55,11 +59,11 @@ def calculate_radius_of_fisheye_image_R_and_coordinates_of_points_on_fisheye_ima
     # y_src = np.divide(np.dot(R,y), r)
 
     dist = width / math.pi
-    r = np.sqrt(np.square(x) * np.square(y))
+    r = np.sqrt(np.square(x) + np.square(y))
     phi = np.arccos(z)
     Radi = dist * phi
 
-    x_src = (Radi * x / r).astype(int)
+    x_src = (Radi * x / r).astype(int) 
     y_src = (Radi * y / r).astype(int)
 
     return x_src, y_src
@@ -84,13 +88,16 @@ if __name__ == '__main__':
     target_image = torch.ones_like(img_t)
 
     for i in range(width):
+        if i %100 == 0:
+            print(i)
         for j in range(height):
-            for k in range(3):
-                u, v = normalize_the_target_plane_coordiantes(i,j)
-
-                x,y,z = calculate_spherical_coordinates(u,v)
-                x_src, y_src = calculate_radius_of_fisheye_image_R_and_coordinates_of_points_on_fisheye_image(x,y,z,width)
-                target_image[i,j,k] = img_t[int(x_src), int(y_src),k]
+            u, v = normalize_the_target_plane_coordiantes(i,j)
+            x,y,z = calculate_spherical_coordinates(u,v)
+            x_src, y_src = calculate_radius_of_fisheye_image_R_and_coordinates_of_points_on_fisheye_image(x,y,z,width)
+            # for k in range(3):
+                # print(x,y,z)
+                # print(x_src, y_src)
+            target_image[i,j,:] = img_t[x_src, y_src,:]
     # plt.imshow(target_image)
-    plt.imshow(img_t)
+    plt.imshow(target_image)
     plt.show()
